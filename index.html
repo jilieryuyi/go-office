@@ -7,7 +7,16 @@
     <script>
         const go = new Go();
         WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject)
-            .then((result) => go.run(result.instance));
+            .then((result) => {
+                go.run(result.instance);
+                var loading = window.document.getElementById("loading")
+                loading.innerText = "loading wasm done"
+            });
+
+        window.onload = function () {
+            var loading = window.document.getElementById("loading")
+            loading.innerText = "loading wasm plugin ..., please wait"
+        }
 
         var export_text = 1
         var export_images = 2
