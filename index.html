@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>go-office</title>
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject)
+            .then((result) => go.run(result.instance));
+
+        var export_text = 1
+        var export_images = 2
+        var export_all =  export_text|export_images
+        var password = ""
+
+        function password_change(){
+            password = document.getElementById("password").value
+            parse()
+        }
+
+        var default_export_option = export_all
+
+        function parse() {
+            var input = window.document.getElementById("file")
+            if (input.files.length <= 0) {
+                return
+            }
+            var loading = window.document.getElementById("loading")
+            loading.innerText = "parse..."
+
+            var text = document.getElementById('text')
+            var images = document.getElementById('images')
+            var reader = new FileReader();
+            reader.onload = function() {
+                console.log(reader.result)
+
+                /**
+                 * 第一个参数是文件的原始data内容
+                 * 最后一个参数是执行完成回调函数，state == success代表成功，fail代表失败、err，state==fail时的具体错误信息，
+                 * 返回值根据第二个参数可能包含text字段，代表导出的文本，images字段代表导出的图片，实际是个字符串数组，
+                 * 格式是 `data:%s;base64,%s`，第一个%s代表congent type，第二个%s代表实际的图片内容，base64编码
+                 * 第二个参数是可选参数，可以是export_all代表导出全部（文本和图片）、export_text仅导出文本，export_images仅导出图片
+                 * 函数的返回值为null代表提交成功，不为空代表实际的错误信息，实际上这里的错误信息只有："invalid args len"，即参数数量不对
+                 * */
+                var err = DocumentExport(
+                    new Uint8Array(reader.result),
+                    default_export_option,
+                    password, (result) => {
+                    console.log(result)
+                    loading.innerText = "parse complete"
+                    if (result.state != 'success') {
+                        loading.innerText = "parse fail："+ result.err
+                        return
+                    }
+                    text.innerText = result.text
+                    var imgs = []
+                    for (var k in result.images) {
+                        var img = result.images[k]
+                        imgs.push('<img style="max-width:80px; max-height:80px;" src="'+img+'" />')
+                    }
+                    images.innerHTML = imgs.join(imgs, "")
+                })
+                console.log(err)
+                if (err) {
+                    alert(err)
+                }
+            }
+
+            reader.readAsArrayBuffer(input.files[0])
+            //reader.readAsDataURL(input.files[0]);
+        }
+
+        function export_option_change(dom) {
+            var eles = window.document.getElementsByName("export_option")
+            for (var k in eles) {
+                var e = eles[k]
+                if (e.checked) {
+                    default_export_option = parseInt(e.value)
+                }
+                console.log(e.checked, e.value, default_export_option)
+            }
+            parse()
+        }
+    </script>
+</head>
+<body>
+<div>
+    <input id="file" type="file" title="select any type office document" onchange="parse()"/>
+</div>
+<div>
+    password<input id="password" type="text" title="password for read the protected office" onchange="password_change()"/>
+</div>
+<div>
+    <label>
+        <input type="radio" name="export_option" onchange="export_option_change(this)" checked value="3"/>
+        export text and images
+    </label>
+</div>
+<div>
+    <label>
+        <input type="radio" name="export_option" onchange="export_option_change(this)" value="1"/>
+        export text
+    </label>
+</div>
+<div>
+    <label>
+        <input type="radio" name="export_option" onchange="export_option_change(this)" value="2"/>
+        export images
+    </label>
+</div>
+<div id="loading"></div>
+<div id="text"></div>
+<div id="images"></div>
+</body>
+</html>
