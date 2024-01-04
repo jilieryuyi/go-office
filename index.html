@@ -43,15 +43,6 @@
             var reader = new FileReader();
             reader.onload = function() {
                 console.log(reader.result)
-
-                /**
-                 * 第一个参数是文件的原始data内容
-                 * 最后一个参数是执行完成回调函数，state == success代表成功，fail代表失败、err，state==fail时的具体错误信息，
-                 * 返回值根据第二个参数可能包含text字段，代表导出的文本，images字段代表导出的图片，实际是个字符串数组，
-                 * 格式是 `data:%s;base64,%s`，第一个%s代表congent type，第二个%s代表实际的图片内容，base64编码
-                 * 第二个参数是可选参数，可以是export_all代表导出全部（文本和图片）、export_text仅导出文本，export_images仅导出图片
-                 * 函数的返回值为null代表提交成功，不为空代表实际的错误信息，实际上这里的错误信息只有："invalid args len"，即参数数量不对
-                 * */
                 var err = DocumentExport(
                     new Uint8Array(reader.result),
                     default_export_option,
@@ -66,7 +57,7 @@
                     var imgs = []
                     for (var k in result.images) {
                         var img = result.images[k]
-                        imgs.push('<img style="max-width:80px; max-height:80px;" src="'+img+'" />')
+                        imgs.push('<img style="max-width:300px; max-height:300px;" src="'+img+'" />')
                     }
                     images.innerHTML = imgs.join(imgs, "")
                 })
