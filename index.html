@@ -8,15 +8,12 @@
         const go = new Go();
         WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject)
             .then((result) => {
-                go.run(result.instance);
+                go.run(result.instance)
                 var loading = window.document.getElementById("loading")
-                loading.innerText = "loading wasm done, enjoy your test"
+                loading.innerText = "wasm loaded"
             });
 
-        window.onload = function () {
-            var loading = window.document.getElementById("loading")
-            loading.innerText = "loading wasm plugin ..., please wait"
-        }
+
 
         var export_text = 1
         var export_images = 2
@@ -42,33 +39,27 @@
             var images = document.getElementById('images')
             var reader = new FileReader();
             reader.onload = function() {
-                console.log(reader.result)
-                var err = DocumentExport(
-                    new Uint8Array(reader.result),
-                    default_export_option,
-                    password, (result) => {
-                    console.log(result)
-                    loading.innerText = "parse complete"
-                    if (result.state != 'success') {
-                        loading.innerText = "parse fail："+ result.err
-                        return
-                    }
-                    text.innerText = result.text
-                    var imgs = []
-                    for (var k in result.images) {
-                        var img = result.images[k]
-                        imgs.push('<img style="max-width:300px; max-height:300px;" src="'+img+'" />')
-                    }
-                    images.innerHTML = imgs.join(imgs, "")
-                })
-                console.log(err)
-                if (err) {
-                    alert(err)
+                var result = DocumentExport(new Uint8Array(reader.result), default_export_option, password )
+                console.log(result)
+                loading.innerText = "parse complete"
+                if (result.state != 'success') {
+                    loading.innerText = "parse fail："+ result.err
+                    return
+                }
+                text.innerText = result.text
+                var imgs = []
+                for (var k in result.images) {
+                    var img = result.images[k]
+                    imgs.push('<img style="max-width:80px; max-height:80px;" src="'+img+'" />')
+                }
+                images.innerHTML = imgs.join(imgs, "")
+
+                if (result.err!="") {
+                    alert(result.err)
                 }
             }
 
             reader.readAsArrayBuffer(input.files[0])
-            //reader.readAsDataURL(input.files[0]);
         }
 
         function export_option_change(dom) {
@@ -109,7 +100,7 @@
         export images
     </label>
 </div>
-<div id="loading"></div>
+<div id="loading">loading wasm..., please wait</div>
 <div id="text"></div>
 <div id="images"></div>
 </body>
